@@ -1,0 +1,7 @@
+{
+  "name": "sharizzy",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
