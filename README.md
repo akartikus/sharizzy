@@ -1,1 +1,1 @@
-# sharizzy
+# sharizzy project
