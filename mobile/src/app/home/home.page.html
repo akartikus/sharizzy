@@ -1,20 +1,63 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Sharizzy
-    </ion-title>
+    <ion-title>Ma liste de courses</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <!-- Zone d'ajout d'un nouvel article -->
+  <ion-item lines="full">
+    <ion-input
+      placeholder="Nouvel article..."
+      [value]="newItemLabel"
+       [(ngModel)]="newItemLabel"
+      (keyup.enter)="addItem()"
+    ></ion-input>
+    <ion-button
+      slot="end"
+      (click)="addItem()"
+      [disabled]="!newItemLabel || !newItemLabel.trim().length"
+    >
+      Ajouter
+    </ion-button>
+  </ion-item>
 
-  <div id="container">
-    <strong>Ma liste de courses</strong>
-    <ion-button (click)= addRandom()> Add item </ion-button>
-  </div>
+  <!-- Liste des items -->
+  <ion-list>
+    @for (item of items; track item.id) {
+          <ion-item-sliding>
+      <ion-item>
+
+        <ion-checkbox
+          slot="start"
+          [checked]="item.status === 'bought'"
+          (ionChange)="toggleItem(item)"
+        ></ion-checkbox>
+
+        <ion-label>
+          <h2 [class.item-bought]="item.status === 'bought'">
+            {{ item.label }}
+          </h2>
+          <p>Ajouté par {{ item.addedBy }}</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item-options side="end">
+        <ion-item-option color="danger" (click)="deleteItem(item)">
+          Supprimer
+        </ion-item-option>
+      </ion-item-options>
+      
+    </ion-item-sliding>
+    }
+
+@if(!items.length){
+<ion-item>
+      <ion-label color="medium">
+        La liste est vide, ajoute ton premier article 🙂
+      </ion-label>
+    </ion-item>
+}
+    
+  </ion-list>
 </ion-content>
