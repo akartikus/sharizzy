@@ -76,7 +76,79 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// (B03 : on ajoutera ici les routes /lists/:listId, etc.)
+// GET
+app.get('/lists/:listId', (req, res) => {
+  const listId = req.params.listId;
+  const list = getOrCreateList(listId); // pour la V1 : crée si ça n'existe pas
+  res.json(list);
+});
+
+//POST
+app.post('/lists/:listId/items', (req, res) => {
+  const listId = req.params.listId;
+  const { label, addedBy } = req.body;
+
+  if (!label || !label.trim()) {
+    return res.status(400).json({ error: 'label is required' });
+  }
+
+  // pour la V1, addedBy peut être facultatif, on met un fallback
+  const owner = addedBy && addedBy.trim() ? addedBy.trim() : 'anonymous';
+
+  const list = getOrCreateList(listId);
+  const item = createItem(label.trim(), owner);
+
+  list.items.push(item);
+
+  // 201 = Created
+  res.status(201).json(item);
+});
+
+//PATCH
+app.patch('/lists/:listId/items/:itemId', (req, res) => {
+  const listId = req.params.listId;
+  const itemId = req.params.itemId;
+  const { label, status } = req.body;
+
+  const list = lists[listId];
+  if (!list) {
+    return res.status(404).json({ error: 'list not found' });
+  }
+
+  const item = list.items.find((i) => i.id === itemId);
+  if (!item) {
+    return res.status(404).json({ error: 'item not found' });
+  }
+
+  if (typeof label === 'string' && label.trim()) {
+    item.label = label.trim();
+  }
+
+  if (status === 'pending' || status === 'bought') {
+    item.status = status;
+  }
+
+  res.json(item);
+});
+
+// DELETE
+app.delete('/lists/:listId/items/:itemId', (req, res) => {
+  const listId = req.params.listId;
+  const itemId = req.params.itemId;
+
+  const list = lists[listId];
+  if (!list) {
+    return res.status(404).json({ error: 'list not found' });
+  }
+
+  const index = list.items.findIndex((i) => i.id === itemId);
+  if (index === -1) {
+    return res.status(404).json({ error: 'item not found' });
+  }
+
+  const [deleted] = list.items.splice(index, 1);
+  res.json(deleted);
+});
 
 app.listen(port, () => {
   console.log(`API listening on port ${port}`);
