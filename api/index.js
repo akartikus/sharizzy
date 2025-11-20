@@ -92,15 +92,20 @@ app.post('/lists/:listId/items', (req, res) => {
     return res.status(400).json({ error: 'label is required' });
   }
 
-  // pour la V1, addedBy peut être facultatif, on met un fallback
-  const owner = addedBy && addedBy.trim() ? addedBy.trim() : 'anonymous';
+  // Pour la V1 : addedBy est obligatoire
+  if (!addedBy || !addedBy.trim()) {
+    return res.status(400).json({ error: 'addedBy (pseudo) is required' });
+  }
 
   const list = getOrCreateList(listId);
-  const item = createItem(label.trim(), owner);
+  const item = createItem(label.trim(), addedBy.trim());
 
   list.items.push(item);
 
-  // 201 = Created
+  console.log(
+    `[API] [${listId}] Item added by "${item.addedBy}": ${item.label}`
+  );
+
   res.status(201).json(item);
 });
 
