@@ -1,246 +1,368 @@
-# API – Shared Shopping List
+API – Shared Shopping List
 
-Backend Node.js + Express + Socket.IO pour l’application de liste de courses partagée.
+Backend Node.js + Express + Socket.IO pour l’application de liste de courses partagée.
+	•	Stockage : en mémoire (pas de base de données pour la V1)
+	•	Exposition :
+	•	API REST pour toutes les écritures / lectures
+	•	API WebSocket (Socket.IO) pour la mise à jour temps réel
 
-- Stockage : en mémoire (pas de base de données pour la V1)
-- - API REST pour toutes les écritures / lectures
-  - API WebSocket (Socket.IO) pour la mise à jour temps réel
+⸻
 
-## Prérequis
+Prérequis
+	•	Node.js￼
+	•	npm
 
-- [Node.js](https://nodejs.org/)
-- npm
+⸻
 
-## Installation
+Installation
 
-Depuis le dossier api/ :
+Depuis le dossier api/ :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  npm install  `
+npm install
 
-## Lancer l’API
+
+⸻
+
+Lancer l’API
 
 En développement :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  npm run dev  `
+npm run dev
 
 ou :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  node index.js  `
+node index.js
 
-Par défaut, l’API écoute sur le port 3000 (modifiable via process.env.PORT).
+Par défaut, l’API écoute sur le port 3000 (modifiable via process.env.PORT).
 
-## Structure
+⸻
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  api/    index.js          # Code principal (Express + Socket.IO)    package.json    README.md  `
+Structure
 
-## Health check
+api/
+  index.js          # Code principal (Express + Socket.IO)
+  package.json
+  README.md
+
+
+⸻
+
+Health check
 
 Permet de vérifier que l’API fonctionne :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  GET /health  `
+GET /health
 
 Réponse :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "status": "ok"  }  `
+{
+  "status": "ok"
+}
 
-## Modèle de données
 
-### ShoppingItem
+⸻
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  type ItemStatus = 'pending' | 'bought';  interface ShoppingItem {    id: string;    label: string;    addedBy: string;      // pseudo de l'utilisateur qui a ajouté l'item    status: ItemStatus;   // 'pending' ou 'bought'  }  `
+Modèle de données
 
-### ShoppingList
+ShoppingItem
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  interface ShoppingList {    id: string;              // identifiant de la liste (ex: "default")    items: ShoppingItem[];  }  `
+type ItemStatus = 'pending' | 'bought';
 
-Le backend maintient un store en mémoire :
+interface ShoppingItem {
+  id: string;
+  label: string;
+  addedBy: string;      // pseudo de l'utilisateur qui a ajouté l'item
+  status: ItemStatus;   // 'pending' ou 'bought'
+}
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  Record  `
+ShoppingList
 
-Une liste default est créée automatiquement au démarrage.
+interface ShoppingList {
+  id: string;              // identifiant de la liste (ex: "default")
+  items: ShoppingItem[];
+}
 
-## API REST
+Le backend maintient un store en mémoire :
 
-### 1\. Récupérer une liste
+Record<string, ShoppingList>
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  GET /lists/:listId  `
+Une liste default est créée automatiquement au démarrage.
 
-- listId : identifiant de la liste (ex. default)
+⸻
+
+API REST
+
+1. Récupérer une liste
+
+GET /lists/:listId
+
+	•	listId : identifiant de la liste (ex. default)
 
 Comportement V1 :
-
-Si la liste n’existe pas encore, elle est créée automatiquement (vide), puis renvoyée.
+Si la liste n’existe pas encore, elle est créée automatiquement (vide), puis renvoyée.
 
 Réponse (200) :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "id": "default",    "items": [      {        "id": "abc123",        "label": "Lait",        "addedBy": "Alex",        "status": "pending"      }    ]  }  `
+{
+  "id": "default",
+  "items": [
+    {
+      "id": "abc123",
+      "label": "Lait",
+      "addedBy": "Alex",
+      "status": "pending"
+    }
+  ]
+}
 
-### 2\. Ajouter un item dans une liste
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  POST /lists/:listId/items  Content-Type: application/json  `
+⸻
+
+2. Ajouter un item dans une liste
+
+POST /lists/:listId/items
+Content-Type: application/json
 
 Body :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "label": "Lait",    "addedBy": "Alex"  }  `
+{
+  "label": "Lait",
+  "addedBy": "Alex"
+}
 
-- label (string, requis) : nom de l’item
-- addedBy (string, requis) : pseudo de l’utilisateur
+	•	label (string, requis) : nom de l’item
+	•	addedBy (string, requis) : pseudo de l’utilisateur
 
 Réponses possibles :
+	•	201 Created + l’item créé
 
-- 201 Created + l’item créé
+{
+  "id": "abc123",
+  "label": "Lait",
+  "addedBy": "Alex",
+  "status": "pending"
+}
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "id": "abc123",    "label": "Lait",    "addedBy": "Alex",    "status": "pending"  }  `
+	•	400 Bad Request si label ou addedBy manquent
 
-- 400 Bad Request si label ou addedBy manquent
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "error": "label is required"  }  `
+{
+  "error": "label is required"
+}
 
 ou
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "error": "addedBy (pseudo) is required"  }  `
+{
+  "error": "addedBy (pseudo) is required"
+}
 
-En plus de l’écriture, cette route déclenche un événement WebSocket item:added (voir plus bas).
+En plus de l’écriture, cette route déclenche un événement WebSocket item:added (voir plus bas).
 
-### 3\. Mettre à jour un item
+⸻
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  PATCH /lists/:listId/items/:itemId  Content-Type: application/json  `
+3. Mettre à jour un item
+
+PATCH /lists/:listId/items/:itemId
+Content-Type: application/json
 
 Body (exemples) :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  { "status": "bought" }  `
+{ "status": "bought" }
 
 ou
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  { "label": "Lait demi-écrémé" }  `
+{ "label": "Lait demi-écrémé" }
 
 ou les deux :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "label": "Lait demi-écrémé",    "status": "bought"  }  `
+{
+  "label": "Lait demi-écrémé",
+  "status": "bought"
+}
 
 Réponses possibles :
+	•	200 OK + l’item mis à jour
 
-- 200 OK + l’item mis à jour
+{
+  "id": "abc123",
+  "label": "Lait demi-écrémé",
+  "addedBy": "Alex",
+  "status": "bought"
+}
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "id": "abc123",    "label": "Lait demi-écrémé",    "addedBy": "Alex",    "status": "bought"  }  `
+	•	404 Not Found si la liste ou l’item n’existent pas :
 
-- 404 Not Found si la liste ou l’item n’existent pas :
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  { "error": "list not found" }  `
+{ "error": "list not found" }
 
 ou
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  { "error": "item not found" }  `
+{ "error": "item not found" }
 
-Cette route déclenche un événement WebSocket item:updated.
+Cette route déclenche un événement WebSocket item:updated.
 
-### 4\. Supprimer un item
+⸻
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  DELETE /lists/:listId/items/:itemId  `
+4. Supprimer un item
+
+DELETE /lists/:listId/items/:itemId
 
 Réponses possibles :
+	•	200 OK + l’item supprimé
 
-- 200 OK + l’item supprimé
+{
+  "id": "abc123",
+  "label": "Lait",
+  "addedBy": "Alex",
+  "status": "pending"
+}
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "id": "abc123",    "label": "Lait",    "addedBy": "Alex",    "status": "pending"  }  `
+	•	404 Not Found :
 
-- 404 Not Found :
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  { "error": "list not found" }  `
+{ "error": "list not found" }
 
 ou
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  { "error": "item not found" }  `
+{ "error": "item not found" }
 
-Cette route déclenche un événement WebSocket item:deleted.
+Cette route déclenche un événement WebSocket item:deleted.
 
-## API WebSocket (Socket.IO)
+⸻
 
-Le backend utilise [Socket.IO](https://socket.io/) pour notifier les clients en temps réel lors des modifications d’une liste.
+API WebSocket (Socket.IO)
 
-- URL de base (dev) : http://localhost:3000
-- Namespace : par défaut (/)
+Le backend utilise Socket.IO￼ pour notifier les clients en temps réel lors des modifications d’une liste.
+	•	URL de base (dev) : http://localhost:3000
+	•	Namespace : par défaut (/)
 
-### 1\. Connexion côté client
+1. Connexion côté client
 
 Exemple en TypeScript (client web / Ionic) :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  import { io } from 'socket.io-client';  const socket = io('http://localhost:3000', {    transports: ['websocket'], // recommandé sur mobile  });  `
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:3000', {
+  transports: ['websocket'], // recommandé sur mobile
+});
 
 Quand un client se connecte, le serveur log :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`[WS] Client connected:`
+[WS] Client connected: <socket.id>
 
-### 2\. Rejoindre une liste (room)
 
-Chaque liste a sa propre “room” Socket.IO, identifiée par listId.
+⸻
+
+2. Rejoindre une liste (room)
+
+Chaque liste a sa propre “room” Socket.IO, identifiée par listId.
 
 Côté client, après la connexion :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  const listId = 'default'; // ou n'importe quel id de liste  socket.emit('joinList', listId);  `
+const listId = 'default'; // ou n'importe quel id de liste
+socket.emit('joinList', listId);
 
-Côté serveur (dans index.js) :
+Côté serveur (dans index.js) :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  io.on('connection', (socket) => {    socket.on('joinList', (listId) => {      socket.join(listId);    });  });  `
+io.on('connection', (socket) => {
+  socket.on('joinList', (listId) => {
+    socket.join(listId);
+  });
+});
 
 Toutes les notifications temps réel concernant cette liste seront envoyées dans cette room.
 
-### 3\. Événements émis par le serveur
+⸻
 
-#### item:added
+3. Événements émis par le serveur
 
+item:added
 Émis lorsqu’un nouvel item est créé via :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  POST /lists/:listId/items  `
+POST /lists/:listId/items
 
 Payload :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "listId": "default",    "item": {      "id": "abc123",      "label": "Lait",      "addedBy": "Alex",      "status": "pending"    }  }  `
+{
+  "listId": "default",
+  "item": {
+    "id": "abc123",
+    "label": "Lait",
+    "addedBy": "Alex",
+    "status": "pending"
+  }
+}
 
 Exemple côté client :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  socket.on('item:added', (data) => {    // data.listId: string    // data.item: ShoppingItem    console.log('Item ajouté :', data.item);  });  `
+socket.on('item:added', (data) => {
+  // data.listId: string
+  // data.item: ShoppingItem
+  console.log('Item ajouté :', data.item);
+});
 
-#### item:updated
 
+⸻
+
+item:updated
 Émis lors de la mise à jour d’un item via :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  PATCH /lists/:listId/items/:itemId  `
+PATCH /lists/:listId/items/:itemId
 
 Payload :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "listId": "default",    "item": {      "id": "abc123",      "label": "Lait demi-écrémé",      "addedBy": "Alex",      "status": "bought"    }  }  `
+{
+  "listId": "default",
+  "item": {
+    "id": "abc123",
+    "label": "Lait demi-écrémé",
+    "addedBy": "Alex",
+    "status": "bought"
+  }
+}
 
 Exemple côté client :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  socket.on('item:updated', (data) => {    console.log('Item mis à jour :', data.item);  });  `
+socket.on('item:updated', (data) => {
+  console.log('Item mis à jour :', data.item);
+});
 
-#### item:deleted
 
+⸻
+
+item:deleted
 Émis lors de la suppression d’un item via :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  DELETE /lists/:listId/items/:itemId  `
+DELETE /lists/:listId/items/:itemId
 
 Payload :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  {    "listId": "default",    "itemId": "abc123"  }  `
+{
+  "listId": "default",
+  "itemId": "abc123"
+}
 
 Exemple côté client :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  socket.on('item:deleted', (data) => {    console.log('Item supprimé, id =', data.itemId);  });  `
+socket.on('item:deleted', (data) => {
+  console.log('Item supprimé, id =', data.itemId);
+});
 
-## Résumé d’utilisation côté client
 
-1.  Récupérer l’état initial de la liste :
+⸻
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  GET /lists/:listId  `
+Résumé d’utilisation côté client
+	1.	Récupérer l’état initial de la liste :
 
-1.  Se connecter au WebSocket et rejoindre la liste :
+GET /lists/:listId
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  const socket = io('http://localhost:3000', { transports: ['websocket'] });  socket.emit('joinList', listId);  `
+	2.	Se connecter au WebSocket et rejoindre la liste :
 
-1.  Écouter les événements :
+const socket = io('http://localhost:3000', { transports: ['websocket'] });
+socket.emit('joinList', listId);
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`  socket.on('item:added', (data) => { /* ajouter l'item au state */ });  socket.on('item:updated', (data) => { /* mettre à jour l'item dans le state */ });  socket.on('item:deleted', (data) => { /* retirer l'item du state */ });  `
+	3.	Écouter les événements :
 
-1.  Le WebSocket se charge de tenir tous les clients à jour automatiquement.
+socket.on('item:added', (data) => { /* ajouter l'item au state */ });
+socket.on('item:updated', (data) => { /* mettre à jour l'item dans le state */ });
+socket.on('item:deleted', (data) => { /* retirer l'item du state */ });
+
+	4.	Effectuer les modifications (création / mise à jour / suppression) via l’API REST.
+Le WebSocket se charge de tenir tous les clients à jour automatiquement.
