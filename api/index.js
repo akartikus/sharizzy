@@ -1,4 +1,7 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -71,6 +74,38 @@ function generateId() {
 // Initialiser une liste par défaut
 getOrCreateList('default');
 
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*', // pour dev : autorise Ionic (http://localhost:8100) à se connecter
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('[WS] Client connected:', socket.id);
+
+  // Le client nous dira à quelle liste il veut s'abonner
+  socket.on('joinList', (listId) => {
+    console.log(`[WS] Socket ${socket.id} join list: ${listId}`);
+    socket.join(listId);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('[WS] Client disconnected:', socket.id);
+  });
+});
+
+/**
+ * Émet un événement de liste sur la room correspondant au listId.
+ * @param {string} listId
+ * @param {string} eventName
+ * @param {any} payload
+ */
+function emitListEvent(listId, eventName, payload) {
+  io.to(listId).emit(eventName, payload);
+}
+
 // Route de test existante
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -92,7 +127,6 @@ app.post('/lists/:listId/items', (req, res) => {
     return res.status(400).json({ error: 'label is required' });
   }
 
-  // Pour la V1 : addedBy est obligatoire
   if (!addedBy || !addedBy.trim()) {
     return res.status(400).json({ error: 'addedBy (pseudo) is required' });
   }
@@ -103,8 +137,14 @@ app.post('/lists/:listId/items', (req, res) => {
   list.items.push(item);
 
   console.log(
-    `[API] [${listId}] Item added by "${item.addedBy}": ${item.label}`
+    `[API] [${listId}] Item ajouté par "${item.addedBy}": ${item.label}`
   );
+
+  // 🔔 Notifier tous les clients de cette liste
+  emitListEvent(listId, 'item:added', {
+    listId,
+    item,
+  });
 
   res.status(201).json(item);
 });
@@ -133,6 +173,14 @@ app.patch('/lists/:listId/items/:itemId', (req, res) => {
     item.status = status;
   }
 
+  console.log(`[API] [${listId}] Item mis à jour: ${item.id}`);
+
+  // 🔔 Notifier les clients
+  emitListEvent(listId, 'item:updated', {
+    listId,
+    item,
+  });
+
   res.json(item);
 });
 
@@ -152,9 +200,18 @@ app.delete('/lists/:listId/items/:itemId', (req, res) => {
   }
 
   const [deleted] = list.items.splice(index, 1);
+
+  console.log(`[API] [${listId}] Item supprimé: ${deleted.id}`);
+
+  // 🔔 Notifier les clients
+  emitListEvent(listId, 'item:deleted', {
+    listId,
+    itemId: deleted.id,
+  });
+
   res.json(deleted);
 });
 
-app.listen(port, () => {
-  console.log(`API listening on port ${port}`);
+server.listen(port, () => {
+  console.log(`API + WebSocket listening on port ${port}`);
 });
