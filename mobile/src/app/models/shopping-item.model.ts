@@ -6,3 +6,8 @@ export interface ShoppingItem {
   addedBy: string;
   status: ItemStatus;
 }
+
+export interface ShoppingList {
+  id: string;
+  items: ShoppingItem[];
+}
