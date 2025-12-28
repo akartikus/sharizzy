@@ -5,59 +5,74 @@
 </ion-header>
 
 <ion-content>
-  <!-- Zone d'ajout d'un nouvel article -->
-  <ion-item lines="full">
-    <ion-input
-      placeholder="Nouvel article..."
-      [value]="newItemLabel"
-       [(ngModel)]="newItemLabel"
-      (keyup.enter)="addItem()"
-    ></ion-input>
-    <ion-button
-      slot="end"
-      (click)="addItem()"
-      [disabled]="!newItemLabel || !newItemLabel.trim().length"
-    >
-      Ajouter
-    </ion-button>
-  </ion-item>
-
-  <!-- Liste des items -->
-  <ion-list>
-    @for (item of items; track item.id) {
-          <ion-item-sliding>
-      <ion-item>
-
-        <ion-checkbox
-          slot="start"
-          [checked]="item.status === 'bought'"
-          (ionChange)="toggleItem(item)"
-        ></ion-checkbox>
-
-        <ion-label>
-          <h2 [class.item-bought]="item.status === 'bought'">
-            {{ item.label }}
-          </h2>
-          <p>Ajouté par {{ item.addedBy }}</p>
-        </ion-label>
-      </ion-item>
-
-      <ion-item-options side="end">
-        <ion-item-option color="danger" (click)="deleteItem(item)">
-          Supprimer
-        </ion-item-option>
-      </ion-item-options>
-      
-    </ion-item-sliding>
-    }
-
-@if(!items.length){
-<ion-item>
-      <ion-label color="medium">
-        La liste est vide, ajoute ton premier article 🙂
+  <!-- État chargé / normal -->
+  <ng-container *ngIf="!isLoading; else loadingTpl">
+    <!-- Infos liste + pseudo -->
+    <ion-item lines="full">
+      <ion-label>
+        <h2>Liste : {{ listId }}</h2>
+        <p>Connecté en tant que {{ pseudo }}</p>
       </ion-label>
     </ion-item>
-}
-    
-  </ion-list>
+
+    <!-- Zone d'ajout d'un nouvel article -->
+    <ion-item lines="full">
+      <ion-input
+        placeholder="Nouvel article..."
+        [(ngModel)]="newItemLabel"
+        (keyup.enter)="addItem()"
+      ></ion-input>
+      <ion-button
+        slot="end"
+        (click)="addItem()"
+        [disabled]="!newItemLabel || !newItemLabel.trim().length"
+      >
+        Ajouter
+      </ion-button>
+    </ion-item>
+
+    <!-- Liste des items -->
+    <ion-list>
+      <!-- Items avec slide pour supprimer -->
+      <ion-item-sliding
+        *ngFor="let item of (items$ | async) ?? []; trackBy: trackByItemId"
+      >
+        <ion-item>
+          <ion-checkbox
+            slot="start"
+            [checked]="item.status === 'bought'"
+            (ionChange)="toggleItem(item)"
+          ></ion-checkbox>
+
+          <ion-label>
+            <h2 [class.item-bought]="item.status === 'bought'">
+              {{ item.label }}
+            </h2>
+            <p>Ajouté par {{ item.addedBy }}</p>
+          </ion-label>
+        </ion-item>
+
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="deleteItem(item)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+
+      <!-- Message si la liste est vide -->
+      <ion-item *ngIf="(items$ | async)?.length === 0">
+        <ion-label color="medium">
+          La liste est vide, ajoute ton premier article 🙂
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- État de chargement -->
+  <ng-template #loadingTpl>
+    <div class="ion-padding ion-text-center">
+      <ion-spinner></ion-spinner>
+      <p>Chargement...</p>
+    </div>
+  </ng-template>
 </ion-content>

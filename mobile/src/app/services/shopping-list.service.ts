@@ -1,107 +1,136 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ShoppingItem, ItemStatus } from '../models/shopping-item.model';
-import { Preferences } from '@capacitor/preferences';
-
-const STORAGE_KEY = 'shopping_list_items';
+import { ShoppingApiService } from './shopping-list-api.service';
 
 @Injectable({
-  providedIn: 'root', // simple pour la V1
+  providedIn: 'root',
 })
 export class ShoppingListService {
+  // Flux des items observables par les composants
   private readonly _items$ = new BehaviorSubject<ShoppingItem[]>([]);
   readonly items$ = this._items$.asObservable();
+
+  // Liste courante (par défaut "default", mais mise à jour via D02)
+  private listId = 'default';
 
   private get items(): ShoppingItem[] {
     return this._items$.value;
   }
 
-  constructor() {
-    this.loadFromStorage();
-  }
+  constructor(private api: ShoppingApiService) {}
 
-  async addItem(label: string, addedBy: string): Promise<void> {
-    const newItem: ShoppingItem = {
-      id: this.generateId(),
-      label,
-      addedBy,
-      status: 'pending',
-    };
+  /**
+   * Initialisation du service pour une liste donnée :
+   * - mémorise le listId
+   * - charge la liste complète depuis l'API
+   */
+  init(listId: string = 'default'): void {
+    this.listId = listId;
 
-    this._items$.next([...this.items, newItem]);
-    await this.saveToStorage();
-  }
-
-  async updateStatus(id: string, status: ItemStatus): Promise<void> {
-    const updated = this.items.map((item) =>
-      item.id === id ? { ...item, status } : item
-    );
-    this._items$.next(updated);
-    await this.saveToStorage();
-  }
-
-  async toggleStatus(id: string): Promise<void> {
-    const updated = this.items.map((item) => {
-      if (item.id !== id) return item;
-      const nextStatus: ItemStatus =
-        item.status === 'pending' ? 'bought' : 'pending';
-      return { ...item, status: nextStatus };
+    this.api.getList(this.listId).subscribe({
+      next: (list) => {
+        this._items$.next(list.items);
+      },
+      error: (err) => {
+        console.error('Erreur chargement liste', err);
+        // On laisse éventuellement l'état courant si besoin
+      },
     });
-    this._items$.next(updated);
-    await this.saveToStorage();
   }
 
-  async deleteItem(id: string): Promise<void> {
-    this._items$.next(this.items.filter((item) => item.id !== id));
-    await this.saveToStorage();
+  /**
+   * Met à jour l'id de la liste courante (utilisé avec les settings utilisateur).
+   * Ne recharge pas automatiquement : appelle ensuite init(listId) si nécessaire.
+   */
+  setListId(listId: string): void {
+    this.listId = listId || 'default';
   }
 
-  async etItems(items: ShoppingItem[]): Promise<void> {
-    // servira plus tard pour charger depuis storage ou backend
-    this._items$.next(items);
-    await this.saveToStorage();
-  }
-
-  clear(): void {
-    this._items$.next([]);
-  }
-
-  private generateId(): string {
-    // suffisant pour un POC
-    return Date.now().toString(36) + Math.random().toString(36).slice(2);
-  }
-
-  private async loadFromStorage(): Promise<void> {
-    try {
-      const { value } = await Preferences.get({ key: STORAGE_KEY });
-      if (!value) {
-        return;
-      }
-
-      const parsed: ShoppingItem[] = JSON.parse(value);
-      // petite sécurité : s'assurer que c’est bien un tableau
-      if (Array.isArray(parsed)) {
-        this._items$.next(parsed);
-      }
-    } catch (err) {
-      console.error(
-        'Erreur lors du chargement de la liste depuis le storage',
-        err
-      );
+  /**
+   * Ajout d'un item :
+   * - appelle l'API
+   * - ajoute l'item retourné à l'état local
+   */
+  addItem(label: string, addedBy: string): void {
+    const trimmed = label.trim();
+    if (!trimmed) {
+      return;
     }
+
+    this.api.addItem(this.listId, trimmed, addedBy).subscribe({
+      next: (item) => {
+        this._items$.next([...this.items, item]);
+      },
+      error: (err: any) => {
+        console.error('Erreur ajout item', err);
+      },
+    });
   }
 
-  private async saveToStorage(): Promise<void> {
-    try {
-      await Preferences.set({
-        key: STORAGE_KEY,
-        value: JSON.stringify(this.items),
-      });
-    } catch (err) {
-      console.error(
-        'Erreur lors de la sauvegarde de la liste dans le storage',
-        err
-      );
+  /**
+   * Toggle du statut (pending <-> bought) :
+   * - calcule le prochain statut
+   * - envoie un PATCH à l'API
+   * - remplace l'item dans la liste locale avec la version retournée
+   */
+  toggleStatus(id: string): void {
+    const current = this.items.find((i) => i.id === id);
+    if (!current) {
+      return;
     }
+
+    const nextStatus: ItemStatus =
+      current.status === 'pending' ? 'bought' : 'pending';
+
+    this.api.updateItem(this.listId, id, { status: nextStatus }).subscribe({
+      next: (updated: any) => {
+        const newItems = this.items.map((item) =>
+          item.id === updated.id ? updated : item
+        );
+        this._items$.next(newItems);
+      },
+      error: (err: any) => {
+        console.error('Erreur maj status', err);
+      },
+    });
+  }
+
+  /**
+   * (Optionnel mais prêt) Mise à jour du label d'un item.
+   */
+  updateLabel(id: string, label: string): void {
+    const trimmed = label.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    this.api.updateItem(this.listId, id, { label: trimmed }).subscribe({
+      next: (updated) => {
+        const newItems = this.items.map((item) =>
+          item.id === updated.id ? updated : item
+        );
+        this._items$.next(newItems);
+      },
+      error: (err) => {
+        console.error('Erreur maj label', err);
+      },
+    });
+  }
+
+  /**
+   * Suppression d'un item :
+   * - DELETE sur l'API
+   * - retire l'item de l'état local si la requête réussit
+   */
+  deleteItem(id: string): void {
+    this.api.deleteItem(this.listId, id).subscribe({
+      next: () => {
+        this._items$.next(this.items.filter((item) => item.id !== id));
+      },
+      error: (err: any) => {
+        console.error('Erreur suppression item', err);
+      },
+    });
   }
 }

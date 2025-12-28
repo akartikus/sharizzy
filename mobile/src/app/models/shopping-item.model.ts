@@ -1,3 +1,5 @@
+// src/app/models/shopping-item.model.ts
+
 export type ItemStatus = 'pending' | 'bought';
 
 export interface ShoppingItem {
@@ -11,3 +13,6 @@ export interface ShoppingList {
   id: string;
   items: ShoppingItem[];
 }
+
+// Payload autorisé pour un PATCH (update)
+export type UpdateItemPayload = Partial<Pick<ShoppingItem, 'label' | 'status'>>;

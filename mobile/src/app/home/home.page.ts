@@ -1,62 +1,104 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ShoppingListService } from '../services/shopping-list.service';
-import { ShoppingItem } from '../models/shopping-item.model';
+import { FormsModule } from '@angular/forms';
+import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import {
+  IonContent,
   IonHeader,
   IonTitle,
   IonToolbar,
-  IonButton,
-  IonContent,
   IonItem,
-  IonInput,
-  IonList,
-  IonItemSliding,
-  IonCheckbox,
   IonLabel,
+  IonList,
+  IonInput,
+  IonButton,
+  IonIcon,
+  IonCheckbox,
+  IonSpinner,
+  IonItemSliding,
   IonItemOptions,
   IonItemOption,
 } from '@ionic/angular/standalone';
-import { FormsModule } from '@angular/forms';
+
+import { Observable } from 'rxjs';
+import { Router } from '@angular/router';
+
+import { ShoppingListService } from '../services/shopping-list.service';
+import { ShoppingItem } from '../models/shopping-item.model';
+import { UserSettingsService } from '../services/user-settings.service';
+import { UserSettings } from '../models/user-settings.model';
 
 @Component({
   selector: 'app-home',
-  templateUrl: 'home.page.html',
-  styleUrls: ['home.page.scss'],
+  standalone: true,
+  templateUrl: './home.page.html',
+  styleUrls: ['./home.page.scss'],
   imports: [
-    IonItemOption,
-    IonItemOptions,
-    IonLabel,
-    IonCheckbox,
-    IonItemSliding,
-    IonList,
-    IonInput,
-    IonItem,
+    // Angular
+    NgIf,
+    NgFor,
+    AsyncPipe,
+    FormsModule,
+
+    // Ionic UI
     IonContent,
-    IonButton,
-    IonToolbar,
     IonHeader,
     IonTitle,
-    FormsModule,
+    IonToolbar,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonInput,
+    IonButton,
+    IonIcon,
+    IonCheckbox,
+    IonSpinner,
+    IonItemSliding,
+    IonItemOptions,
+    IonItemOption,
   ],
 })
 export class HomePage implements OnInit {
-  items: ShoppingItem[] = [];
+  items$!: Observable<ShoppingItem[]>;
 
   newItemLabel = '';
-  pseudo = 'Moi';
+  pseudo = '';
+  listId = '';
 
-  constructor(private shoppingListService: ShoppingListService) {}
+  isLoading = true;
 
-  ngOnInit(): void {
-    this.shoppingListService.items$.subscribe((items) => (this.items = items));
+  constructor(
+    private readonly shoppingListService: ShoppingListService,
+    private readonly userSettingsService: UserSettingsService,
+    private readonly router: Router
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.items$ = this.shoppingListService.items$;
+
+    const settings = await this.userSettingsService.getSettings();
+
+    if (!settings) {
+      this.isLoading = false;
+      await this.router.navigateByUrl('/setup', { replaceUrl: true });
+      return;
+    }
+
+    this.applySettings(settings);
+  }
+
+  private applySettings(settings: UserSettings): void {
+    this.pseudo = settings.pseudo;
+    this.listId = settings.listId || 'default';
+
+    this.shoppingListService.setListId(this.listId);
+    this.shoppingListService.init(this.listId);
+
+    this.isLoading = false;
   }
 
   addItem(): void {
     const label = this.newItemLabel.trim();
-    if (!label) {
-      return;
-    }
+    if (!label) return;
 
     this.shoppingListService.addItem(label, this.pseudo);
     this.newItemLabel = '';
