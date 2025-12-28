@@ -5,9 +5,9 @@ import {
   ItemStatus,
   UpdateItemPayload,
 } from '../models/shopping-item.model';
+import { ShoppingListApiService } from './shopping-list-api.service';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../environments/environment';
-import { ShoppingListApiService } from './shopping-list-api.service';
 
 interface ItemAddedPayload {
   listId: string;
@@ -31,6 +31,10 @@ export class ShoppingListService implements OnDestroy {
   private readonly _items$ = new BehaviorSubject<ShoppingItem[]>([]);
   readonly items$ = this._items$.asObservable();
 
+  // Flux d'erreurs lisibles côté UI
+  private readonly _error$ = new BehaviorSubject<string | null>(null);
+  readonly error$ = this._error$.asObservable();
+
   private listId = 'default';
 
   private socket?: Socket;
@@ -45,36 +49,34 @@ export class ShoppingListService implements OnDestroy {
     this.disconnectSocket();
   }
 
-  /**
-   * Init: fixe la liste courante, charge l'état initial depuis l'API,
-   * puis connecte le WebSocket et rejoint la room de cette liste.
-   */
   init(listId: string = 'default'): void {
     this.listId = listId;
+    this.clearError();
 
     this.api.getList(this.listId).subscribe({
       next: (list) => {
         this._items$.next(list.items);
-        // après avoir l'état initial, on connecte la socket
         this.connectSocket();
       },
       error: (err) => {
         console.error('Erreur chargement liste', err);
+        this.setError(
+          'Impossible de charger la liste. Vérifie ta connexion ou réessaie plus tard.'
+        );
       },
     });
   }
 
   setListId(listId: string): void {
-    if (this.listId === listId) {
-      return;
-    }
+    if (this.listId === listId) return;
     this.listId = listId || 'default';
-    // on pourrait re-init ici si tu changes de liste à chaud
   }
 
   addItem(label: string, addedBy: string): void {
     const trimmed = label.trim();
     if (!trimmed) return;
+
+    this.clearError();
 
     this.api.addItem(this.listId, trimmed, addedBy).subscribe({
       next: (item) => {
@@ -85,6 +87,7 @@ export class ShoppingListService implements OnDestroy {
       },
       error: (err) => {
         console.error('Erreur ajout item', err);
+        this.setError("Impossible d'ajouter l'article. Vérifie ta connexion.");
       },
     });
   }
@@ -96,31 +99,47 @@ export class ShoppingListService implements OnDestroy {
     const nextStatus: ItemStatus =
       current.status === 'pending' ? 'bought' : 'pending';
 
-    this.updateItem(id, { status: nextStatus });
+    this.updateItem(
+      id,
+      { status: nextStatus },
+      "Impossible de mettre à jour l'article."
+    );
   }
 
   updateLabel(id: string, label: string): void {
     const trimmed = label.trim();
     if (!trimmed) return;
 
-    this.updateItem(id, { label: trimmed });
+    this.updateItem(
+      id,
+      { label: trimmed },
+      "Impossible de renommer l'article."
+    );
   }
 
   deleteItem(id: string): void {
+    this.clearError();
+
     this.api.deleteItem(this.listId, id).subscribe({
       next: () => {
         this._items$.next(this.items.filter((item) => item.id !== id));
-        // Les autres clients recevront item:deleted par WebSocket
       },
       error: (err) => {
         console.error('Erreur suppression item', err);
+        this.setError("Impossible de supprimer l'article pour le moment.");
       },
     });
   }
 
-  // ---------- Privé : REST patch + mise à jour locale ----------
+  // ---------- REST PATCH commun ----------
 
-  private updateItem(id: string, patch: UpdateItemPayload): void {
+  private updateItem(
+    id: string,
+    patch: UpdateItemPayload,
+    errorMsg: string
+  ): void {
+    this.clearError();
+
     this.api.updateItem(this.listId, id, patch).subscribe({
       next: (updated) => {
         const newItems = this.items.map((item) =>
@@ -130,19 +149,19 @@ export class ShoppingListService implements OnDestroy {
       },
       error: (err) => {
         console.error('Erreur maj item', err);
+        this.setError(errorMsg);
       },
     });
   }
 
-  // ---------- Privé : WebSocket ----------
+  // ---------- WebSocket ----------
 
   private connectSocket(): void {
-    // éviter de créer plusieurs sockets
     if (this.socket && this.socket.connected) {
       return;
     }
 
-    this.disconnectSocket(); // au cas où
+    this.disconnectSocket();
 
     this.socket = io(environment.apiBaseUrl, {
       transports: ['websocket'],
@@ -150,11 +169,17 @@ export class ShoppingListService implements OnDestroy {
 
     this.socket.on('connect', () => {
       console.log('[WS] connected', this.socket?.id);
+      this.clearError();
       this.socket?.emit('joinList', this.listId);
     });
 
     this.socket.on('disconnect', () => {
       console.log('[WS] disconnected');
+      // on n'empêche pas l'app de fonctionner,
+      // mais on avertit que le temps réel est coupé
+      this.setError(
+        'Connecté au serveur, mais la synchro temps réel est coupée (WebSocket déconnecté).'
+      );
     });
 
     this.socket.on('item:added', (payload: ItemAddedPayload) => {
@@ -190,5 +215,15 @@ export class ShoppingListService implements OnDestroy {
       this.socket.disconnect();
       this.socket = undefined;
     }
+  }
+
+  // ---------- Gestion d'erreurs ----------
+
+  private setError(message: string): void {
+    this._error$.next(message);
+  }
+
+  private clearError(): void {
+    this._error$.next(null);
   }
 }

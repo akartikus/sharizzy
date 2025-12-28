@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import {
@@ -17,9 +17,10 @@ import {
   IonItemSliding,
   IonItemOptions,
   IonItemOption,
+  IonToast,
 } from '@ionic/angular/standalone';
 
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { ShoppingListService } from '../services/shopping-list.service';
@@ -33,6 +34,7 @@ import { UserSettings } from '../models/user-settings.model';
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
   imports: [
+    IonToast,
     // Angular
     NgIf,
     NgFor,
@@ -57,7 +59,7 @@ import { UserSettings } from '../models/user-settings.model';
     IonItemOption,
   ],
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, OnDestroy {
   items$!: Observable<ShoppingItem[]>;
 
   newItemLabel = '';
@@ -65,6 +67,11 @@ export class HomePage implements OnInit {
   listId = '';
 
   isLoading = true;
+
+  errorMessage: string | null = null;
+  toastErrorOpen = false;
+
+  private errorSub?: Subscription;
 
   constructor(
     private readonly shoppingListService: ShoppingListService,
@@ -75,6 +82,12 @@ export class HomePage implements OnInit {
   async ngOnInit(): Promise<void> {
     this.items$ = this.shoppingListService.items$;
 
+    // écoute des erreurs du service
+    this.errorSub = this.shoppingListService.error$.subscribe((msg) => {
+      this.errorMessage = msg;
+      this.toastErrorOpen = !!msg;
+    });
+
     const settings = await this.userSettingsService.getSettings();
 
     if (!settings) {
@@ -84,6 +97,10 @@ export class HomePage implements OnInit {
     }
 
     this.applySettings(settings);
+  }
+
+  ngOnDestroy(): void {
+    this.errorSub?.unsubscribe();
   }
 
   private applySettings(settings: UserSettings): void {

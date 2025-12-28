@@ -75,4 +75,14 @@
       <p>Chargement...</p>
     </div>
   </ng-template>
+
+  <!-- Toast d'erreur -->
+  <ion-toast
+    [isOpen]="toastErrorOpen"
+    [message]="errorMessage ?? ''"
+    (didDismiss)="toastErrorOpen = false"
+    duration="3500"
+    color="danger"
+    position="bottom"
+  ></ion-toast>
 </ion-content>
