@@ -12,7 +12,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class ShoppingApiService {
+export class ShoppingListApiService {
   private readonly baseUrl: string = environment.apiBaseUrl;
 
   constructor(private readonly http: HttpClient) {}
