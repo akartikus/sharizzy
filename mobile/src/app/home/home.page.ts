@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, CommonModule, NgFor, NgIf } from '@angular/common';
 import {
   IonContent,
   IonHeader,
@@ -57,6 +57,7 @@ import { UserSettings } from '../models/user-settings.model';
     IonItemSliding,
     IonItemOptions,
     IonItemOption,
+    CommonModule,
   ],
 })
 export class HomePage implements OnInit, OnDestroy {
