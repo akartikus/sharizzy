@@ -7,9 +7,16 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:dev": "ng build --configuration development",
+    "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
+    "android:dev": "npm run build:dev && npm run android:sync",
+    "android:prod": "npm run build:prod && npm run android:sync",
+    "comment": "# Android build uses environment based on build config: build:dev → environment.ts | build:prod → environment.prod.ts"
   },
   "private": true,
   "dependencies": {
