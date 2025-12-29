@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { AsyncPipe, CommonModule, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import {
   IonContent,
   IonHeader,
@@ -9,14 +8,7 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonInput,
-  IonButton,
-  IonIcon,
-  IonCheckbox,
   IonSpinner,
-  IonItemSliding,
-  IonItemOptions,
-  IonItemOption,
   IonToast,
 } from '@ionic/angular/standalone';
 
@@ -28,18 +20,18 @@ import { ShoppingItem } from '../models/shopping-item.model';
 import { UserSettingsService } from '../services/user-settings.service';
 import { UserSettings } from '../models/user-settings.model';
 
+import { UserInfoComponent } from './components/user-info/user-info.component';
+import { AddItemFormComponent } from './components/add-item-form/add-item-form.component';
+import { ShoppingItemComponent } from './components/shopping-item/shopping-item.component';
+
 @Component({
   selector: 'app-home',
   standalone: true,
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
   imports: [
-    IonToast,
     // Angular
-    NgIf,
-    NgFor,
     AsyncPipe,
-    FormsModule,
 
     // Ionic UI
     IonContent,
@@ -49,21 +41,18 @@ import { UserSettings } from '../models/user-settings.model';
     IonItem,
     IonLabel,
     IonList,
-    IonInput,
-    IonButton,
-    IonIcon,
-    IonCheckbox,
     IonSpinner,
-    IonItemSliding,
-    IonItemOptions,
-    IonItemOption,
-    CommonModule,
+    IonToast,
+
+    // Custom components
+    UserInfoComponent,
+    AddItemFormComponent,
+    ShoppingItemComponent,
   ],
 })
 export class HomePage implements OnInit, OnDestroy {
   items$!: Observable<ShoppingItem[]>;
 
-  newItemLabel = '';
   pseudo = '';
   listId = '';
 
@@ -83,7 +72,6 @@ export class HomePage implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.items$ = this.shoppingListService.items$;
 
-    // écoute des erreurs du service
     this.errorSub = this.shoppingListService.error$.subscribe((msg) => {
       this.errorMessage = msg;
       this.toastErrorOpen = !!msg;
@@ -114,23 +102,15 @@ export class HomePage implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
-  addItem(): void {
-    const label = this.newItemLabel.trim();
-    if (!label) return;
-
+  onItemAdded(label: string): void {
     this.shoppingListService.addItem(label, this.pseudo);
-    this.newItemLabel = '';
   }
 
-  toggleItem(item: ShoppingItem): void {
+  onItemToggle(item: ShoppingItem): void {
     this.shoppingListService.toggleStatus(item.id);
   }
 
-  deleteItem(item: ShoppingItem): void {
+  onItemDelete(item: ShoppingItem): void {
     this.shoppingListService.deleteItem(item.id);
-  }
-
-  trackByItemId(index: number, item: ShoppingItem): string {
-    return item.id;
   }
 }

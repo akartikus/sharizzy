@@ -1,0 +1,16 @@
+<ion-list inset="true" lines="none" class="add-list">
+  <ion-item>
+    <ion-input
+      placeholder="Ex : Lait, pâtes, pommes..."
+      [(ngModel)]="newItemLabel"
+      (keyup.enter)="onAddItem()"
+    ></ion-input>
+    <ion-button
+      slot="end"
+      (click)="onAddItem()"
+      [disabled]="!newItemLabel || !newItemLabel.trim().length"
+    >
+      Ajouter
+    </ion-button>
+  </ion-item>
+</ion-list>
